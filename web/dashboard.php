@@ -99,10 +99,19 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
-
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                                 href="devices.php" aria-expanded="false">
                                 <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Dispositivos</span></a>
+                        </li>
+                        <?php if($_SESSION['users_username'] === "javier"): ?>
+                          <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                                  href="devices_list_admin.php" aria-expanded="false">
+                                  <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Listado Dispositivos</span></a>
+                          </li>
+                          <?php endif; ?>
+                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                                href="logout.php" aria-expanded="false"><i class="fa fa-table"
+                                    aria-hidden="true"></i><span class="hide-menu">Cerrar sesión</span></a>
                         </li>
                     </ul>
 
@@ -129,7 +138,7 @@
                     <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
                         <div class="d-md-flex">
                             <ol class="breadcrumb ml-auto">
-                                <li><a href="#">Dashboard</a></li>
+                                <i class="fas fa-user" aria-hidden="true"></i><span class="hide-menu"><?php echo($_SESSION['users_username']) ?></span></a>
                             </ol>
                         </div>
                     </div>
@@ -156,7 +165,7 @@
                                             style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
                                     </div>
                                 </li>
-                                <li class="ml-auto"><span id="display_temp" class="counter text-success">23</span></li>
+                                <li class="ml-auto"><span id="display_temp" class="counter text-success">--</span></li>
                             </ul>
                         </div>
                     </div>
@@ -169,7 +178,7 @@
                                             style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
                                     </div>
                                 </li>
-                                <li class="ml-auto"><span id="display_humedad" class="counter text-purple">78%</span></li>
+                                <li class="ml-auto"><span id="display_humedad" class="counter text-purple">--%</span></li>
                             </ul>
                         </div>
                     </div>
@@ -182,7 +191,7 @@
                                             style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
                                     </div>
                                 </li>
-                                <li class="ml-auto"><span id="display_bateria" class="counter text-info">90%</span>
+                                <li class="ml-auto"><span id="display_bateria" class="counter text-info">--%</span>
                                 </li>
                             </ul>
                         </div>

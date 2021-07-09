@@ -3,16 +3,16 @@ session_start();
 $_SESSION['logged'] = false;
 
 $msg="";
-$email="";
+$username="";
 
-if(isset($_POST['email']) && isset($_POST['password'])){
+if(isset($_POST['username']) && isset($_POST['password'])){
 
-  if($_POST['email']==""){
+  if($_POST['username']==""){
     $msg.="Debe ingresar un email";
   }else if ($_POST['password']==""){
     $msg.="Debe ingresar un password";
   }else{
-    $email = strip_tags($_POST['email']);
+    $username = strip_tags($_POST['username']);
     $password = sha1(strip_tags($_POST['password']));
 
     $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
@@ -22,18 +22,27 @@ if(isset($_POST['email']) && isset($_POST['password'])){
       die();
     }
 
-    $result = $conn->query("SELECT * FROM `users` WHERE `user_email` = '".$email."' AND `user_pass` = '".$password."' ");
+    $result = $conn->query("SELECT * FROM `users` WHERE `users_username` = '".$username."' AND `users_password` = '".$password."' ");
     $users = $result->fetch_all(MYSQLI_ASSOC);
+
+    $result_mqtt = $conn->query("SELECT * FROM `mqtt_user` WHERE `username` = '".$email."' AND `password` = '".$password."' ");
+    $users_mqtt = $result_mqtt->fetch_all(MYSQLI_ASSOC);
+
+    $count_mqtt = count($users_mqtt);
+    if ($count_mqtt == 1){
+      $_SESSION['user_mqtt_id'] = $users[0]['id'];
+    }
 
     $count = count($users);
 
     if ($count == 1){
-      $_SESSION['user_id'] = $users[0]['id'];
-      $_SESSION['user_email'] = $users[0]['email'];
+      $_SESSION['users_id'] = $users[0]['users_id'];
+      $_SESSION['users_username'] = $users[0]['users_username'];
 
-      $msg .="Logueado con éxito!";
+      //$msg .="Logueado con éxito!";
       $_SESSION['logged'] = true;
       echo '<meta http-equiv="refresh" content="1; url=dashboard.php">';
+
     }else{
       $msg.="Acceso denegado";
       $_SESSION['logged']=false;
@@ -88,7 +97,7 @@ if(isset($_POST['email']) && isset($_POST['password'])){
         <!-- ============================================================== -->
         <!-- Topbar header - style you can find in pages.scss -->
         <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin5">
+        <header class="" data-navbarbg="skin5">
             <nav class="navbar top-navbar navbar-expand-md navbar-dark">
                 <div class="navbar-header" data-logobg="skin6">
                     <!-- ============================================================== -->
@@ -97,13 +106,13 @@ if(isset($_POST['email']) && isset($_POST['password'])){
                     <a class="navbar-brand" href="dashboard.php">
                         <!-- Logo icon
                         <b class="logo-icon">
-                           Dark Logo icon
+                             Dark Logo icon
                             <img src="plugins/images/logo-icon.png" alt="homepage" />
-                        </b>-->
-                        <!--End Logo icon -->
-                        <!-- Logo text
+                        </b>
+                        End Logo icon
+                         Logo text
                         <span class="logo-text">
-                             dark Logo text
+                            <!-- dark Logo text
                             <img src="plugins/images/logo-text.png" alt="homepage" />
                         </span>-->
                     </a>
@@ -170,18 +179,16 @@ if(isset($_POST['email']) && isset($_POST['password'])){
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <!-- User Profile-->
-                        <li class="sidebar-item pt-2">
-                          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="index.html"
-                              aria-expanded="false">
-                              <i class="fas fa-clock fa-fw" aria-hidden="true"></i>
-                              <span class="hide-menu">Login</span>
-                          </a>
-                        </li>
-                                    <!--
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                                href="profile.html" aria-expanded="false">
-                                <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Profile</span></a>
+                                href="index.html" aria-expanded="false"><i class="fas fa-clock fa-fw"
+                                    aria-hidden="true"></i><span class="hide-menu">Login</span></a>
                         </li>
+
+                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                                href="index.php" aria-expanded="false">
+                                <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Register</span></a>
+                        </li>
+                        <!--
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                                 href="basic-table.html" aria-expanded="false"><i class="fa fa-table"
                                     aria-hidden="true"></i><span class="hide-menu">Table</span></a></li>
@@ -259,13 +266,13 @@ if(isset($_POST['email']) && isset($_POST['password'])){
                     <div class="col-lg-8 col-xlg-9 col-md-12">
                         <div class="card">
                             <div class="card-body">
-                                <form method="post" target="register.php" name="form" class="form-horizontal form-material">
+                                <form method="post" target="login.php" name="form" class="form-horizontal form-material">
                                     <div class="form-group mb-4">
-                                        <label for="example-email" class="col-md-12 p-0">Email</label>
+                                        <label for="example-email" class="col-md-12 p-0">Usuario</label>
                                         <div class="col-md-12 border-bottom p-0">
-                                            <input name="email" type="email"
-                                                class="form-control p-0 border-0" value="<?php echo $email;?>" required
-                                                id="email">
+                                            <input name="username" type="text"
+                                                class="form-control p-0 border-0" value="<?php echo $username;?>" required
+                                                id="username">
                                         </div>
                                     </div>
                                     <div class="form-group mb-4">
@@ -281,6 +288,9 @@ if(isset($_POST['email']) && isset($_POST['password'])){
                                     </div>
                                 </form>
                             </div>
+                        </div>
+                        <div style="color:red" class="">
+                          <?php echo $msg ?>
                         </div>
                     </div>
                 </div>
@@ -338,8 +348,8 @@ if(isset($_POST['email']) && isset($_POST['password'])){
           connectTimeout: 4000, // Timeout period
           // Authentication information
           clientId: 'emqx javascript',
-          username: 'web_client',
-          password: '1234',
+          //username: 'emqx_test',
+          //password: 'emqx_test',
           keepalive: 60,
     }
 

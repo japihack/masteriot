@@ -12,21 +12,34 @@
   $alias="";
   $serie="";
   $user_id="";
+  $msg="";
+
+
 
   if (isset($_POST['serie']) && isset($_POST['alias'])) {
-    $alias = strip_tags($_POST['alias']);
-    $serie = strip_tags($_POST['serie']);
-    $user_id = $_SESSION['user_id'];
+    $alias = $_POST['alias'];
+    $serie = $_POST['serie'];
+    //$serie = strip_tags($_POST['serie']);
+    $user_id = $_SESSION['user_mqtt_id']; //el id del usuario registrado en la ACL. mqtt_user.
 
-    $conn = mysqli_connect("localhost","admin_pihack","j65966298","admin_pihackiot");
+    $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
 
     if ($conn==false){
       echo "Error al conectarse a la BBDD";
       die();
     }
 
-    $conn->query("INSERT INTO `estaciones` (`serie`, `alias`, `user_id`) VALUES ('".$serie."', '".$alias."', '".$user_id."');");
+    //$conn->query("INSERT INTO `estaciones` (`estaciones_serie`, `estaciones_alias`, `estaciones_user_id`) VALUES ('".$serie."', '".$alias."', '".$user_id."');");
+    $conn->query("INSERT INTO `estaciones` (`estaciones_serie`, `estaciones_alias`, `estaciones_user_id`) VALUES ('".$serie."','".$alias."','".$user_id."');");
+    $msg = $alias . " agregado con éxito";
+    if ($conn === true){
+
+    //  echo($msg);
+    } else{
+    //  $msg .= "exito? - " . $exito . " - " . "alias - " . $alias . " serie - " . $serie . " user_id - " . $user_id;
+    }
   }
+
 ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -41,8 +54,7 @@
     <meta name="description"
         content="Ample Admin Lite is powerful and clean admin dashboard template, inpired from Bootstrap Framework">
     <meta name="robots" content="noindex,nofollow">
-    <title>Ample Admin Lite Template by WrapPixel</title>
-    <link rel="canonical" href="https://www.wrappixel.com/templates/ample-admin-lite/" />
+    <title>IoT Hogar</title>
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="plugins/images/favicon.png">
     <!-- Custom CSS -->
@@ -74,7 +86,7 @@
         <!-- ============================================================== -->
         <!-- Topbar header - style you can find in pages.scss -->
         <!-- ============================================================== -->
-        <header class="topbar" data-navbarbg="skin5">
+        <header class="" data-navbarbg="skin5">
             <nav class="navbar top-navbar navbar-expand-md navbar-dark">
                 <div class="navbar-header" data-logobg="skin6">
                     <!-- ============================================================== -->
@@ -164,10 +176,18 @@
                                 href="devices.php" aria-expanded="false">
                                 <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Dispositivos</span></a>
                         </li>
-                        <!--
+                        <?php if($_SESSION['user_email'] === "javier@javier.com"): ?>
+                          <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                                  href="devices_list_admin.php" aria-expanded="false">
+                                  <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Listado Dispositivos</span></a>
+                          </li>
+                          <?php endif; ?>
+
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                                href="basic-table.html" aria-expanded="false"><i class="fa fa-table"
-                                    aria-hidden="true"></i><span class="hide-menu">Table</span></a></li>
+                                href="logout.php" aria-expanded="false"><i class="fa fa-table"
+                                    aria-hidden="true"></i><span class="hide-menu">Cerrar sesión</span></a>
+                        </li>
+                        <!--
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                                 href="fontawesome.html" aria-expanded="false"><i class="fa fa-font"
                                     aria-hidden="true"></i><span class="hide-menu">Icon</span></a></li>
@@ -202,27 +222,22 @@
         <div class="page-wrapper" style="min-height: 250px;">
             <!-- ============================================================== -->
             <!-- Bread crumb and right sidebar toggle -->
-            <!-- ==============================================================
+            <!-- ============================================================== -->
             <div class="page-breadcrumb bg-white">
                 <div class="row align-items-center">
                     <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
-                        <h4 class="page-title text-uppercase font-medium font-14">Login Page</h4>
+                        <h4 class="page-title text-uppercase font-medium font-14">Dispositivos</h4>
                     </div>
-
                     <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
                         <div class="d-md-flex">
                             <ol class="breadcrumb ml-auto">
-                                <li><a href="#">Dashboard</a></li>
+                                <i class="fas fa-user" aria-hidden="true"></i><span class="hide-menu"><?php echo($_SESSION['user_email']) ?></span></a>
                             </ol>
-                            <a href="https://wrappixel.com/templates/ampleadmin/" target="_blank"
-                                class="btn btn-danger  d-none d-md-block pull-right m-l-20 hidden-xs hidden-sm waves-effect waves-light">Upgrade
-                                to Pro</a>
                         </div>
                     </div>
-
                 </div>
-               /.col-lg-12
-            </div>-->
+                <!-- /.col-lg-12 -->
+            </div>
             <!-- ============================================================== -->
             <!-- End Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -236,14 +251,13 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="white-box">
-                            <h3 class="box-title">Dispositivos</h3>
                             <h5 class="box-subtitle">Agrega un dispositivo introduciendo un alias y el número de serie</h5>
                         </div>
                     </div>
                     <div class="col-lg-8 col-xlg-9 col-md-12">
                         <div class="card">
                             <div class="card-body">
-                                <form method="post" target="register.php" name="form" class="form-horizontal form-material">
+                                <form method="post" target="devices.php" name="form" class="form-horizontal form-material">
                                     <div class="form-group mb-4">
                                         <label for="example-email" class="col-md-12 p-0">Alias</label>
                                         <div class="col-md-12 border-bottom p-0">
@@ -265,7 +279,11 @@
                                     </div>
                                 </form>
                             </div>
+
                         </div>
+                    </div>
+                    <div style="color:blue" class="">
+                      <?php echo $msg ?>
                     </div>
                 </div>
                 <!-- ============================================================== -->
