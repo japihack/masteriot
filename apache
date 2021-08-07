@@ -1,0 +1,20 @@
+service apache2 stop
+
+nano /etc/apache2/ports.conf
+
+agregamos: Listen 8081 debajo del 80
+
+nano /etc/apache2/sites-enabled/000-default.conf
+
+Cambiamos la línea <VirtualHost *:80> por <VirtualHost *:8081>
+
+service apache2 start
+
+Ahora Apache debería vincularse al nuevo puerto. Verificamos la tabla de sockets de red local usando el comando netstat o ss:
+
+netstat -tlpn | grep apache
+ss -tlpn | grep apache
+
+Nos debería aparecer el puerto 8081
+
+ahora ya podemos usar un navegador y poner http://ip:8081/index.html y salir la web de apache o lo que sea.
