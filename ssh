@@ -1,0 +1,477 @@
+chmod 400 pihackiot.pem
+
+
+// puertos que abrimos al crear la instancia
+21      ftp
+80      http
+443     https
+8083    vestas
+
+configurar elastic ip para tener ip estática
+asociar la ip privada a la instancia
+
+ssh -i pihackiot.pem ubuntu@13.36.33.112
+
+sudo apt update
+sudo apt upgrade
+
+
+// comandos para instalar vestacp
+
+
+    # Connect to your server as root via SSH ssh root@your.server
+    # Download installation script curl -O http://vestacp.com/pub/vst-install.sh
+    # Run it bash vst-install.sh --nginx yes --apache yes --phpfpm no --named yes --remi yes --vsftpd yes --proftpd no --iptables yes --fail2ban yes --quota no --exim no --dovecot no --spamassassin no --clamav no --softaculous yes --mysql yes --postgresql no --hostname 13.36.33.112 --email pihack@protonmail.com --password j65966298
+
+Congratulations, you have just successfully installed Vesta Control Panel
+
+    https://35.180.178.31:8083
+    username: admin
+    password: j65966298
+
+We hope that you enjoy your installation of Vesta. Please feel free to contact us anytime if you have any questions.
+Thank you.
+
+
+Abrimos el navegador e ingresamos en https://pihackiot.xyz:8083
+][|@#~™|}]@
+Habilitamos el certficado ssl con let's encript.
+
+habilitamos ftp en vestacp
+modificamos vsftpd en vestacp (apartado servidor) e incluimos acceso en modo pasivo: pasv_address="ip_publica"
+comprobar los permisos de la carpeta /home/admin/web/public_html/$host (tienen que ser 755)
+usamos atom con el plugin remote ftp para conectarnos a nuestro servidor. Configuramos el archivo .ftpconfig
+
+
+{
+    "protocol": "ftp",
+    "host": "iothogar.xyz", // string - The hostname or IP address of the FTP server. Default: 'localhost'
+    "port": 21, // integer - The port of the FTP server. Default: 21
+    "user": "admin_pihack", // string - Username for authentication. Default: 'anonymous'
+    "pass": "j65966298", // string - Password for authentication. Default: 'anonymous@'
+    "promptForPass": false, // boolean - Set to true for enable password dialog. This will prevent from using cleartext password in this config. Default: false
+    "remote": "/public_html",
+    "secure": false, // mixed - Set to true for both control and data connection encryption, 'control' for control connection encryption only, or 'implicit' for implicitly encrypted control connection (this mode is deprecated in modern times, but usually uses port 990) Default: false
+    "secureOptions": null, // object - Additional options to be passed to tls.connect(). Default: (null) see https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
+    "connTimeout": 10000, // integer - How long (in milliseconds) to wait for the control connection to be established. Default: 10000
+    "pasvTimeout": 10000, // integer - How long (in milliseconds) to wait for a PASV data connection to be established. Default: 10000
+    "keepalive": 10000, // integer - How often (in milliseconds) to send a 'dummy' (NOOP) command to keep the connection alive. Default: 10000\. If set to 0, keepalive is disabled.
+    "watch":[ // array - Paths to files, directories, or glob patterns that are watched and when edited outside of the atom editor are uploaded. Default : []
+        "dist/stylesheets/main.css", // reference from the root of the project.
+        "dist/stylesheets/",
+        "dist/stylesheets/*.css"
+    ],
+    "watchTimeout":500 // integer - The duration ( in milliseconds ) from when the file was last changed for the upload to begin.
+}
+
+
+instalamos certificados ssl en vesta:
+root@pihackiot:/usr/local/vesta/ssl# ln -s /home/admin/conf/web/ssl.pihackiot.xyz.crt certificate.crt
+root@pihackiot:/usr/local/vesta/ssl# ln -s /home/admin/conf/web/ssl.pihackiot.xyz.key certificate.key
+# service vesta restart
+
+# MYSQL
+
+TABLA USUARIOS
+CREATE TABLE `admin_masteriot`.`users`(
+    `users_id` INT NOT NULL AUTO_INCREMENT,
+    `users_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `users_email` VARCHAR(60) NOT NULL,
+    `users_username` VARCHAR(60) NOT NULL,
+    `users_password` VARCHAR(60) NOT NULL,
+    PRIMARY KEY (`users_id`)) ENGINE = INNODB;
+
+TABLA ESTACIONES
+
+CREATE TABLE `admin_masteriot`.`estaciones`(
+    `estaciones_id` INT NOT NULL,
+    `estaciones_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `estaciones_serie` VARCHAR(45) NULL,
+    `estaciones_alias` VARCHAR(45) NULL,
+    `estaciones_user_id` INT NULL,
+    PRIMARY KEY(`estaciones_id`),
+    INDEX `fk_estaciones_1_idx`(`estaciones_user_id` ASC),
+    CONSTRAINT `fk_estaciones_1`
+    FOREIGN KEY (`estaciones_user_id`)
+    REFERENCES `admin_masteriot`.`users`(`users_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
+
+# Instalamos emqx
+
+#ojo a esto añadir el ./bionic stable
+#deb [arch=amd64] https://repos.emqx.io/emqx-ce/deb/ubuntu ./bionic stable
+
+
+#Antes de arrancar el servicio hay que modificar los puertos por defecto en el arhchivo /emqx/etc/emqx.conf. En la guía de emqx.io "first time" indica cúales son. Aunque en el curso hemos cambiado alguno más. En concreto:
+    https://docs.emqx.io/tutorial/v3/en/quick_start/run_first.html
+    # node name = admin_cursoiot@127.0.0.1
+    # listener.ws.external = 8083 -> 8093
+    # listener.wss.external = 8084 -> 8094
+
+    # en el archivo /emqx/etc/plugins/emqx_managment.conf
+    # management.listener.http = 8090
+
+    # Ahora sí:
+    sudo emqx start
+    user:admin
+    pass:public
+
+Abrimos puertos en vesta y aws para emqx mqtt (sin esto no funciona el dashboard)
+1883, 8883, 8093, 8094, 8090, 18083
+
+instalmos los certificados para dar seguridad ssl a emqx (ojo! con la versión v4.0.3, al final he utilizado la versión 3.0.1)
+Importante con los certificados: es mejor copiar el archivo /home/amdin/conf/web/ssl.$dominio.crt y .key a la carpeta donde estén los certificados de emqx, que en la versión 3.X es en /etc/emqx/certs/ después se renombran a cert.pem y key.pem. Lo más importante es que después se cambie el propietario y grupo de los archivos a "emqx:emqx" -> chown emqx:emqx cert.pem y key.pem. Si no el servicio no podrá acceder a los certificados. Me he dado cuenta de esto, gracias al log /var/log/emqx/emqx.log.1. Más info en https://github.com/emqx/emqx/issues/2335
+
+
+
+
+sudo emqx stop
+
+
+
+#También hacemos que el dashboard vaya por https. Vamos a /etc/emqx/plugins/emqx_dashboard.conf y descomentamos todo lo relacionado con https (bueno, lo mismo que con http).
+#comprobar la ruta de los certificados, tanto en emqx_dashboard.conf como en emqx.managament.conf que sea /etc/emqx/certs/cert.pem y key.pem
+
+root@pihackiot:/# emqx start
+
+
+## En nuestro Dashboard pondremos el siguiente código para suscribirnos y visualizar los datos enviados por el dispositivo. en las líneas $("#display_h101").html... el displapy_h101 es el id del objeto cuyo valor queremos actualizar.
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script type="text/javascript">
+
+    //display_temp coincide con el id de la etiqueta html cuyo valor queremos cambiar
+
+    function update_values(h101, h102, h103){
+      $("#display_h101").html(h101);
+      $("#display_h102").html(h102);
+      $("#display_h103").html(h103);
+    }
+
+    function process_msg(topic, message){
+      var msg = message.toString();
+
+      if (topic == "h101"){
+        $("#display_h101").html(msg);
+        /*
+        var msg = message.toString();
+
+        var valores_splitted = msg.split(",")
+        var h101 = valores_splitted[0]
+        var h102 = valores_splitted[1];
+        var h103 = valores_splitted[2];
+
+        update_values(h101, h102, h103)
+        */
+      }else if (topic == "h102") {
+        $("#display_h102").html(msg);
+
+      }else if (topic == "h103") {
+        $("#display_h103").html(msg);
+      }
+    }
+
+
+
+    // connection option
+    const options = {
+      		clean: true, // retain session
+          connectTimeout: 4000, // Timeout period
+          // Authentication information
+          clientId: 'emqx156javascript',
+          username: '',
+          password: '',
+          keepalive: 60,
+    }
+
+
+    /**********************
+      Conexión
+    **********************/
+    const WebSocket_URL = 'wss://iothogar.xyz:8094/mqtt'
+    const client = mqtt.connect(WebSocket_URL, options)
+
+    client.on('connect', () => {
+      console.log('Mqtt conectado por WS con éxito!')
+
+      client.subscribe('h101', {qos: 0},(error) => {
+        if (!error){
+          console.log('Suscrito con éxito!')
+        }else{
+          console.log('Suscripción fallida')
+        }
+      })
+
+      client.subscribe('h102', {qos: 0}, (error) => {
+        if (!error){
+          console.log('Suscrito a otro con exito!')
+        }else{
+          cosole.log('Suscripción fallida')
+        }
+      })
+
+      client.subscribe('h103', {qos: 0}, (error) => {
+        if (!error){
+          console.log('Suscrito a otro con exito!')
+        }else{
+          cosole.log('Suscripción fallida')
+        }
+      })
+
+      client.publish('casa', 'esto es un éxito!!!', (error) => {
+        console.log(error || 'Mensaje enviado!!!')
+      })
+    })
+
+    client.on('reconnect', (error) => {
+        console.log('reconnecting:', error)
+    })
+
+    client.on('error', (error) => {
+        console.log('Connection failed:', error)
+    })
+
+    client.on('message', (topic, message) => {
+      console.log('mensaje - ', message.toString(), ' recibido según el tópico ', topic)
+
+      process_msg(topic,message);
+    })
+
+
+    </script>
+    
+    
+ 
+
+
+//esp32
+
+instalar librería espressif
+https://github.com/espressif/arduino-esp32
+instalar python2
+
+puede que de algún otro error que implique instalar: pip install pyserial y pip install esptool
+
+escoger la placa nodemcu32
+
+https://www.prometec.net/instalando-esp32/
+
+//Instalamos nodejs
+apt install nodejs
+apt install npm (manejador de paquetes)
+
+para hacer una prueba, nos creamos una carpeta "node" en nuestra ruta de la web, accedemos a ella y ponemos en terminal: $node init
+
+contestamos a las preguntas...
+
+después creamos un archivo index.js en esa ruta y escribimos en su interior: console.log("hola mundo");
+
+A continuación: $node index.js
+
+
+//tabla editable
+Para crear la tabla editable necesitamos hacer uso de jquery. Nos descargamos el código de  NicolasCARPi /
+jquery_jeditable 
+
+En concreto jquery.jeditable.min.js y lo metemos dentro de la carpeta 'js' de nuestro proyecto.
+
+Después, en el archivo  'js/custom.js' añadimos lo siguiente:
+...
+$(".edit").editable('action.php', {
+      data: $(this).attr("data-id"),
+      submitdata : function (value, settings) {
+        var estaciones_id = $(this).attr("data-id");
+        var action = 'edit'
+      return {
+           "estaciones_id": estaciones_id,
+           "action": action
+      }
+    }
+    });
+...
+});
+
+En el archivo php donde renderizamos la tabla ponemos lo siguiente:
+
+...
+<div class="table-responsive">
+                                <table id="editableTable" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-top-0">Id</th>
+                                            <th class="border-top-0">User_id</th>
+                                            <th class="border-top-0">Serie</th>
+                                            <th class="border-top-0">Alias</th>
+                                            <th class="border-top-0">Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                      <?php foreach ($devices as $device) {?>
+                                        <tr>
+                                            <td><?php echo $device['estaciones_id'] ?></td>
+                                            <td><span id="estaciones_user_id" data-id="<?php echo $device['estaciones_id'] ?>" class="edit"><?php echo $device['estaciones_user_id'] ?></span></td>
+                                            <td><?php echo $device['estaciones_serie'] ?></td>
+                                            <td><?php echo $device['estaciones_alias'] ?></td>
+                                            <td><?php echo $device['estaciones_date'] ?></td>
+                                            <td><a href="delete.php?id=<?php echo $data['id']; ?>">Delete</a></td>
+                                        </tr>
+                                      <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+...
+
+<!--Custom JavaScript -->
+    <script src="js/custom.js"></script>
+    <!-- Editable Table -->
+    <script src="js/jquery.jeditable.min.js"></script>
+    
+
+También necesitamos el archivo 'action.php' que será el que actualice el dato en la BBDD:
+
+<?php
+  session_start();
+  $logged = $_SESSION['logged'];
+
+  if(!$logged || $_SESSION['user_id' != 5]){
+    echo "Ingreso no autorizado";
+    die();
+    //echo '<meta http-equiv="refresh" content="1; url=login.php">';
+  }
+
+  $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
+  if ($conn==false){
+    echo "Error al conectarse a la BBDD";
+    die();
+  }
+  if ($_POST['action'] == 'edit' && $_POST['estaciones_id']) {
+  	$updateField='';
+  	if(isset($_POST['estaciones_user_id'])) {
+  		$updateField.= "estaciones_user_id='".$_POST['estaciones_user_id']."'";
+  	} else if(isset($_POST['estaciones_serie'])) {
+  		$updateField.= "estaciones_serie='".$_POST['estaciones_serie']."'";
+  	} else if(isset($_POST['estaciones_alias'])) {
+  		$updateField.= "estaciones_alias='".$_POST['estaciones_alias']."'";
+  	}
+  	if($_POST['id']) {
+  		//$sqlQuery = "UPDATE estaciones SET $updateField WHERE estaciones_id='" . $_POST['estaciones_id'] . "'";
+      $sqlQuery = "UPDATE estaciones SET ".$_POST['id']." = '".$_POST['value']."' WHERE estaciones_id='" . $_POST['estaciones_id'] . "'";
+  		mysqli_query($conn, $sqlQuery) or die("database error:". mysqli_error($conn));
+  		$data = array(
+  			"message"	=> "Record Updated",
+  			"status" => 1
+  		);
+  		//echo json_encode($data);
+      echo $_POST['value'];
+  	}
+  }
+  
+  //PARA OTRA TABLA, LA DE USERS
+  if ($_POST['action'] == 'edituser'){
+    $updateField='';
+    if(isset($_POST['users_email'])) {
+      $updateField.="users_email='".$_POST['users_email']."'";
+    }
+    if($_POST['id']) {
+      $sqlQuery = "UPDATE users SET ".$_POST['id']." = '".$_POST['value']."' WHERE users_id='" . $_POST['users_id']."'";
+      mysqli_query($conn, $sqlQuery) or die("database error: ".mysqli_error($conn));
+      $data = array(
+        "message" => "Record Updated",
+        "status" => 1
+      );
+      echo $_POST['value'];
+    }
+  }
+  
+  
+  if ($_POST['action'] == 'delete' && $_POST['estaciones_id']) {
+  	$sqlQuery = "DELETE FROM estaciones WHERE estaciones_id='" . $_POST['estaciones_id'] . "'";
+  	mysqli_query($conn, $sqlQuery) or die("database error:". mysqli_error($conn));
+  	$data = array(
+  		"message"	=> "Record Deleted",
+  		"status" => 1
+  	);
+  	echo json_encode($data);
+  }
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////***************
+https://platzi.com/blog/django-aws/
+
+sudo apt-get install python3-pip python3-dev
+
+//postgresql
+sudo apt-get install postgresql postgresql-contrib libpq-dev
+Success. You can now start the database server using:
+
+    pg_ctlcluster 12 main start
+
+Ver Cluster Port Status Owner    Data directory              Log file
+12  main    5432 down   postgres /var/lib/postgresql/12/main /var/log/postgresql/postgresql-12-main.log
+
+sudo apt-get install git
+sudo apt-get install nginx
+
+Configurar PostgreSQL
+
+    Iniciamos sesión con el usuario postgres: [shell]sudo su postgres[/shell]
+    Entramos al shell interactivo de postgres: [shell]psql[/shell]
+    Creamos una base de datos: [shell]CREATE DATABASE platzi;[/shell]
+    Creamos un usuario para la base de datos: [shell]CREATE USER pihack WITH PASSWORD 'pihack1';[/shell]
+    Le damos permisos al usuario sobre la base de datos: [shell]GRANT ALL PRIVILEGES ON DATABASE iot TO pihack;[/shell]
+    Salimos del shell: [shell]\q[/shell]
+    Salimos de la sesión de postgres: [shell]exit[/shell]
+
+Configurar el proyecto
+
+    Clonar el proyecto de Github: [shell]git clone https://github.com/pablotrinidad/cursos_platzi.git platzi[/shell]
+    Instalar virtualenv: [shell]sudo pip3 install virtualenv[/shell]
+    Crear entorno virtual: [shell]virtualenv -p $(which python3) .venv[/shell]
+    Activar entorno virtual: [shell]source .venv/bin/activate[/shell]
+    Instalar dependencias para Pillow: [shell]sudo apt-get install libjpeg-dev[/shell]
+    Ir al folder del proyecto: [shell]cd platzi[/shell]
+    Instalar dependencias de python del proyecto: [shell]pip install -r requirements/prod.txt[/shell]
+    Agregamos algunas variables de entorno a ~/.bashrc para probar localmente que todo esté funcionando: [shell]vi ~/.bashrc[/shell] Las variables lucen algo similar a lo siguiente: [shell] export PLATZI_SECRET_KEY="random_key:aasdafasf"export PLATZI_DB_NAME="platzi"; export PLATZI_DB_USER="freddier"; export PLATZI_DB_PASSWORD="cvander<3" export PLATZI_DB_PORT="5432" export PLATZI_DB_HOST="localhost"export DJANGO_SETTINGS_MODULE="platzi.settings.prod"[/shell]
+    Leemos las variables: [shell]source ~/.bashrc[/shell]
+    Editamos la variable ALLOWED_HOSTS del archivo de settings de producción: [shell]vim platzi/settings/prod.py[/shell] La variable tendrá algo como lo siguiente, donde gatos.io sea tu dominio o IP: [python]ALLOWED_HOSTS = ['.gatos.io'][/python]
+*********///////
