@@ -40,7 +40,7 @@ client.on('message', function(topic, message){
 
         (async () => {
                 try {
-                        const rows = await query("SELECT * FROM `estaciones` WHERE `estaciones_serie`='" + topic + "'");
+                        const rows = await query("SELECT * FROM `estaciones`");
                         console.log(rows[0].estaciones_serie);
                         this.resultado = rows[0].estaciones_id;
                         console.log("resultado -> " + this.resultado);

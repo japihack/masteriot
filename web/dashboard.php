@@ -1,13 +1,40 @@
 <?php
   session_start();
   $logged = $_SESSION['logged'];
+  $user_id = $_SESSION['users_id'];
+  $usuario = "javier";
 
   if(!$logged){
     echo "Ingreso no autorizado";
-    die();
-    //echo '<meta http-equiv="refresh" content="1; url=login.php">';
+    //die();
+    echo '<meta http-equiv="refresh" content="1; url=login.php">';
 
   }
+
+  $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
+
+  if ($conn==false){
+    echo "Error al conectarse a la BBDD";
+    die();
+  }
+
+  $estaciones_result = $conn->query("SELECT * FROM `estaciones` WHERE `estaciones_user_id`=" . $user_id);
+  $estaciones = $estaciones_result->fetch_all(MYSQLI_ASSOC);
+
+  $consulta = "SELECT estaciones.estaciones_serie, mediciones.mediciones_date, mediciones.mediciones_valor from mediciones
+                                    inner join estaciones ON estaciones.estaciones_id=mediciones.mediciones_estaciones_id
+                                    inner join users on users.users_id=estaciones.estaciones_user_id and users.users_id =" . $user_id .
+                                    " ORDER BY mediciones.mediciones_date";
+
+  $mediciones_result = $conn->query($consulta);
+  $mediciones = $mediciones_result->fetch_all(MYSQLI_ASSOC);
+
+
+
+
+
+
+
 ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -155,48 +182,55 @@
                 <!-- ============================================================== -->
                 <!-- Three charts -->
                 <!-- ============================================================== -->
-                <div class="row justify-content-center">
-                    <div class="col-lg-4 col-sm-6 col-xs-12">
-                        <div class="white-box analytics-info">
-                            <h3 class="box-title">Temperatura</h3>
-                            <ul class="list-inline two-part d-flex align-items-center mb-0">
-                                <li>
-                                    <div><canvas width="67" height="30"
-                                            style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
-                                    </div>
-                                </li>
-                                <li class="ml-auto"><span id="display_temp" class="counter text-success">--</span></li>
-                            </ul>
+                  <div class="row justify-content-center">
+                    <?php foreach ($estaciones as $estacion) {?>
+                      <div class="col-lg-4 col-sm-6 col-xs-12">
+                          <div class="white-box analytics-info">
+                              <h3 class="box-title"><?php echo $estacion['estaciones_serie'] ?></h3>
+                              <ul class="list-inline two-part d-flex align-items-center mb-0">
+                                  <li>
+                                      <div><canvas width="67" height="30"
+                                              style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
+                                      </div>
+                                  </li>
+                                  <li class="ml-auto"><span id="<?php echo $estacion['estaciones_serie'] ?>" class="counter text-success">--</span></li>
+                              </ul>
+                          </div>
+                      </div>
+                      <?php } ?>
+
+
+                    </div>
+
+
+                    <div class="row justify-content-center">
+                      <div class="col-sm-12">
+                          <div class="white-box">
+                              <div class="table-responsive">
+                                  <table class="table">
+                                      <thead>
+                                          <tr>
+                                              <th class="border-top-0">Estacion_serie</th>
+                                              <th class="border-top-0">Fecha</th>
+                                              <th class="border-top-0">Temperatura</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+                                        <?php foreach ($mediciones as $medicion) {?>
+                                          <tr>
+                                              <td><?php echo $medicion['estaciones_serie'] ?></td>
+                                              <td><?php echo $medicion['mediciones_date'] ?></td>
+                                              <td><?php echo $medicion['mediciones_valor'] ?></td>
+                                          </tr>
+                                        <?php }?>
+                                      </tbody>
+                                  </table>
+                              </div>
+                          </div>
                         </div>
                     </div>
-                    <div class="col-lg-4 col-sm-6 col-xs-12">
-                        <div class="white-box analytics-info">
-                            <h3 class="box-title">Humedad</h3>
-                            <ul class="list-inline two-part d-flex align-items-center mb-0">
-                                <li>
-                                    <div><canvas width="67" height="30"
-                                            style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
-                                    </div>
-                                </li>
-                                <li class="ml-auto"><span id="display_humedad" class="counter text-purple">--%</span></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-sm-6 col-xs-12">
-                        <div class="white-box analytics-info">
-                            <h3 class="box-title">Batería</h3>
-                            <ul class="list-inline two-part d-flex align-items-center mb-0">
-                                <li>
-                                    <div><canvas width="67" height="30"
-                                            style="display: inline-block; width: 67px; height: 30px; vertical-align: top;"></canvas>
-                                    </div>
-                                </li>
-                                <li class="ml-auto"><span id="display_bateria" class="counter text-info">--%</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+
+
                 <!-- ============================================================== -->
                 <!-- PRODUCTS YEARLY SALES -->
                 <!-- ============================================================== -->
@@ -240,35 +274,29 @@
     <script src="js/waves.js"></script>
     <!--Menu sidebar -->
     <script src="js/sidebarmenu.js"></script>
+    <!-- Editable Table -->
+    <script src="js/jquery.jeditable.min.js"></script>
     <!--Custom JavaScript -->
     <script src="js/custom.js"></script>
     <!--This page JavaScript -->
-    <!--chartis chart-->
-    <script src="plugins/bower_components/chartist/dist/chartist.min.js"></script>
-    <script src="plugins/bower_components/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
+    <!--chartis chart <script src="plugins/bower_components/chartist/dist/chartist.min.js"></script>
+    <script src="plugins/bower_components/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>-->
+
     <script src="js/pages/dashboards/dashboard1.js"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script type="text/javascript">
 
     //display_temp coincide con el id de la etiqueta html cuyo valor queremos cambiar
 
-    function update_values(temperatura, humedad, bateria){
-      $("#display_temp").html(temperatura);
-      $("#display_humedad").html(humedad);
-      $("#display_bateria").html(bateria);
+    function update_values(h101, h102, h103){
+      $("#h101").html(h101);
+      $("#h102").html(h102);
+      $("#display_h103").html(h103);
     }
 
     function process_msg(topic, message){
-      if (topic == "values"){
-        var msg = message.toString();
-
-        var valores_splitted = msg.split(",")
-        var temperatura = valores_splitted[0]
-        var humedad = valores_splitted[1];
-        var bateria = valores_splitted[2];
-
-        update_values(temperatura, humedad, bateria)
-      }
+      var msg = message.toString();
+      $("#"+topic).html(msg + "º");
     }
 
 
@@ -279,8 +307,8 @@
           connectTimeout: 4000, // Timeout period
           // Authentication information
           clientId: 'emqx156javascript',
-          username: 'web_client',
-          password: '1234',
+          username: '',
+          password: '',
           keepalive: 60,
     }
 
@@ -294,11 +322,27 @@
     client.on('connect', () => {
       console.log('Mqtt conectado por WS con éxito!')
 
-      client.subscribe('values', {qos: 0},(error) => {
+      client.subscribe('H101TEMP', {qos: 0},(error) => {
         if (!error){
           console.log('Suscrito con éxito!')
         }else{
           console.log('Suscripción fallida')
+        }
+      })
+
+      client.subscribe('H102TEMP', {qos: 0}, (error) => {
+        if (!error){
+          console.log('Suscrito a otro con exito!')
+        }else{
+          cosole.log('Suscripción fallida')
+        }
+      })
+
+      client.subscribe('H103TEMP', {qos: 0}, (error) => {
+        if (!error){
+          console.log('Suscrito a otro con exito!')
+        }else{
+          cosole.log('Suscripción fallida')
         }
       })
 
@@ -323,6 +367,8 @@
 
 
     </script>
+
 </body>
 
 </html>
+

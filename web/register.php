@@ -6,29 +6,31 @@ if ($conn==false){
   die();
 }
 
+$username = "";
 $email = "";
 $password = "";
 $password_r = "";
 $msg = "";
 
-if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['password_r'])) {
+if (isset($_POST['email']) && isset($_POST['username']) && isset($_POST['password']) && isset($_POST['password_r'])) {
 
+  $username = strip_tags($_POST['username']);
   $email = strip_tags($_POST['email']);
   $password = strip_tags($_POST['password']);
   $password_r = strip_tags($_POST['password_r']);
 
   if ($password==$password_r) {
-    $result = $conn->query("SELECT * FROM `users` WHERE `user_email` = '". $email."'");
+    $result = $conn->query("SELECT * FROM `users` WHERE `users_email` = '". $email."'");
     $users = $result->fetch_all(MYSQLI_ASSOC);
 
     $count = count($users);
 
     if($count==0){
       $password = sha1($password);
-      $conn->query("INSERT INTO `users` (`user_email`, `user_pass`) VALUES ('".$email."', '".$password."');");
+      $conn->query("INSERT INTO `users` (`users_username`, `users_email`, `users_password`) VALUES ('".$username."', '".$email."', '".$password."');");
       $msg.="Usuario creado correctamente. Puede ingresar haciendo <a href='login.php'>clic aquí</a>";
     }else{
-      $msg.="email no válido";
+      $msg.="email o usuario no válido";
     }
   }else{
    $msg = "Rellene correctamente el formulario";
@@ -94,13 +96,13 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['passwor
                         <!-- Logo icon -->
                         <b class="logo-icon">
                             <!-- Dark Logo icon -->
-                            <img src="plugins/images/logo-icon.png" alt="homepage" />
+                            <img src="plugins/images/logo-ico.png" alt="homepage" />
                         </b>
                         <!--End Logo icon -->
                         <!-- Logo text -->
                         <span class="logo-text">
                             <!-- dark Logo text -->
-                            <img src="plugins/images/logo-text.png" alt="homepage" />
+                            <img src="plugins/images/logo-tex.png" alt="homepage" />
                         </span>
                     </a>
                     <!-- ============================================================== -->
@@ -167,7 +169,7 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['passwor
                     <ul id="sidebarnav">
                         <!-- User Profile-->
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                                href="index.html" aria-expanded="false"><i class="fas fa-clock fa-fw"
+                                href="index.php" aria-expanded="false"><i class="fas fa-clock fa-fw"
                                     aria-hidden="true"></i><span class="hide-menu">Register</span></a></li>
                                     <!--
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
@@ -253,6 +255,14 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['passwor
                             <div class="card-body">
                                 <form method="post" target="register.php" name="form" class="form-horizontal form-material">
                                     <div class="form-group mb-4">
+                                      <label class="col-md-12 p-0">Username</label>
+                                      <div class="col-md-12 border-bottom p-0">
+                                          <input name="username" type="text"
+                                              class="form-control p-0 border-0" value="<?php echo $username;?>" required
+                                              id="username">
+                                      </div>
+                                    </div>
+                                    <div class="form-group mb-4">
                                         <label for="example-email" class="col-md-12 p-0">Email</label>
                                         <div class="col-md-12 border-bottom p-0">
                                             <input name="email" type="email"
@@ -270,6 +280,11 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['passwor
                                         <label class="col-md-12 p-0">Repeat Password</label>
                                         <div class="col-md-12 border-bottom p-0">
                                             <input type="password" name="password_r" class="form-control p-0 border-0">
+                                        </div>
+                                    </div>
+                                    <div class="form-group mb-4">
+                                        <div class="col-sm-12">
+                                            <button class="btn btn-success"><a href="login.php">Go To Login</button>
                                         </div>
                                     </div>
                                     <div class="form-group mb-4">
@@ -334,3 +349,4 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['passwor
 </body>
 
 </html>
+

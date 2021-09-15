@@ -96,6 +96,19 @@ CREATE TABLE `admin_masteriot`.`estaciones`(
     REFERENCES `admin_masteriot`.`users`(`users_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE);
+    
+CREATE TABLE `admin_masteriot`.`mediciones`(
+    `mediciones_id` INT NOT NULL,
+    `mediciones_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `mediciones_valor` DECIMAL NULL,
+    `mediciones_estaciones_id` INT NULL,
+    PRIMARY KEY(`mediciones_id`),
+    INDEX `fk_mediciones_1_idx`(`mediciones_estaciones_id` ASC),
+    CONSTRAINT `fk_mediciones_1`
+    FOREIGN KEY (`mediciones_estaciones_id`)
+    REFERENCES `admin_masteriot`.`estaciones`(`estaciones_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
 
 # Instalamos emqx
 
@@ -253,7 +266,10 @@ instalar python2
 
 puede que de algún otro error que implique instalar: pip install pyserial y pip install esptool
 
-escoger la placa nodemcu32
+herramientas - tarjetas -gestor de tarjetas. Instalar esp8266 community huzzah
+
+
+escoger la placa "ADAFRUIT FEATHER HUZZAH esp8266
 
 https://www.prometec.net/instalando-esp32/
 
@@ -268,6 +284,31 @@ contestamos a las preguntas...
 después creamos un archivo index.js en esa ruta y escribimos en su interior: console.log("hola mundo");
 
 A continuación: $node index.js
+
+npm install mysql
+npm install mqtt
+
+archivo index.js:
+
+var mysql = require('mysql');
+var mqtt = require('mqtt');
+
+var pool = mysql.createPool({
+	connectionLimit: 10,
+	host: "iothogar.xyz",
+	user: "admin_masteriot",
+	password: "j65966298",
+	database: "admin_masteriot
+});
+
+var query = "SELECT * FROM users WHERE 1";
+
+pool.query(query,function(err,result,fields){
+	if(err)throw err;
+	console.log(result);
+});
+
+
 
 
 //tabla editable

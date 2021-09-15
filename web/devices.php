@@ -9,35 +9,41 @@
 
   }
 
+  $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
+
+  if ($conn==false){
+    echo "Error al conectarse a la BBDD";
+    die();
+  }
+
   $alias="";
   $serie="";
-  $user_id="";
+  $user_id=$_SESSION['users_id'];
   $msg="";
 
+  $estaciones_result = $conn->query("SELECT * FROM `estaciones` WHERE `estaciones_user_id` = ".$user_id);
+  $estaciones = $estaciones_result->fetch_all(MYSQLI_ASSOC);
 
 
   if (isset($_POST['serie']) && isset($_POST['alias'])) {
     $alias = $_POST['alias'];
     $serie = $_POST['serie'];
     //$serie = strip_tags($_POST['serie']);
-    $user_id = $_SESSION['user_mqtt_id']; //el id del usuario registrado en la ACL. mqtt_user.
+    //$user_id = $_SESSION['user_mqtt_id']; //el id del usuario registrado en la ACL. mqtt_user.
 
-    $conn = mysqli_connect("localhost","admin_masteriot","j65966298","admin_masteriot");
 
-    if ($conn==false){
-      echo "Error al conectarse a la BBDD";
-      die();
-    }
-
+    $conn->query("INSERT INTO `estaciones` (`estaciones_serie`, `estaciones_alias`, `estaciones_user_id`) VALUES ('".$serie."', '".$alias."', '".$user_id."');");
     //$conn->query("INSERT INTO `estaciones` (`estaciones_serie`, `estaciones_alias`, `estaciones_user_id`) VALUES ('".$serie."', '".$alias."', '".$user_id."');");
-    $conn->query("INSERT INTO `estaciones` (`estaciones_serie`, `estaciones_alias`, `estaciones_user_id`) VALUES ('".$serie."','".$alias."','".$user_id."');");
-    $msg = $alias . " agregado con éxito";
-    if ($conn === true){
+    $msg = "usuario: ". $user_id . " - alias: " . $alias . " agregado con éxito";
+    if ($conn == true){
 
-    //  echo($msg);
+      echo($msg);
     } else{
-    //  $msg .= "exito? - " . $exito . " - " . "alias - " . $alias . " serie - " . $serie . " user_id - " . $user_id;
+      //$msg .= "exito? - " . $exito . " - " . "alias - " . $alias . " serie - " . $serie . " user_id - " . $user_id;
     }
+
+    $estaciones_result = $conn->query("SELECT * FROM `estaciones` WHERE `estaciones_user_id` = ".$user_id);
+    $estaciones = $estaciones_result->fetch_all(MYSQLI_ASSOC);
   }
 
 ?>
@@ -176,7 +182,7 @@
                                 href="devices.php" aria-expanded="false">
                                 <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Dispositivos</span></a>
                         </li>
-                        <?php if($_SESSION['user_email'] === "javier@javier.com"): ?>
+                        <?php if($_SESSION['users_username'] === "javier"): ?>
                           <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                                   href="devices_list_admin.php" aria-expanded="false">
                                   <i class="fa fa-user" aria-hidden="true"></i><span class="hide-menu">Listado Dispositivos</span></a>
@@ -231,7 +237,7 @@
                     <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
                         <div class="d-md-flex">
                             <ol class="breadcrumb ml-auto">
-                                <i class="fas fa-user" aria-hidden="true"></i><span class="hide-menu"><?php echo($_SESSION['user_email']) ?></span></a>
+                                <i class="fas fa-user" aria-hidden="true"></i><span class="hide-menu"><?php echo($_SESSION['users_username']) ?></span></a>
                             </ol>
                         </div>
                     </div>
@@ -287,6 +293,39 @@
                     </div>
                 </div>
                 <!-- ============================================================== -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="white-box">
+
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-top-0">Id</th>
+                                            <th class="border-top-0">User_id</th>
+                                            <th class="border-top-0">Serie</th>
+                                            <th class="border-top-0">Alias</th>
+                                            <th class="border-top-0">Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                      <?php foreach ($estaciones as $estacion) {?>
+                                        <tr>
+                                            <td><?php echo $estacion['estaciones_id'] ?></td>
+                                            <td><?php echo $estacion['estaciones_user_id'] ?></td>
+                                            <td><?php echo $estacion['estaciones_serie'] ?></td>
+                                            <td><?php echo $estacion['estaciones_alias'] ?></td>
+                                            <td><?php echo $estacion['estaciones_date'] ?></td>
+                                            <td><a href="delete.php?id=<?php echo $estacion['estaciones_id']; ?>">Delete</a></td>
+                                        </tr>
+                                      <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                      </div>
+                </div>
+                <!-- ============================================================== -->
                 <!-- End PAge Content -->
                 <!-- ============================================================== -->
                 <!-- ============================================================== -->
@@ -334,3 +373,4 @@
 </body>
 
 </html>
+

@@ -2,7 +2,7 @@
   session_start();
   $logged = $_SESSION['logged'];
 
-  if(!$logged || $_SESSION['user_id' != 5]){
+  if(!$logged || $_SESSION['users_username' != "javier"]){
     echo "Ingreso no autorizado";
     die();
     //echo '<meta http-equiv="refresh" content="1; url=login.php">';
@@ -17,16 +17,17 @@
   $result = $conn->query("SELECT * FROM `estaciones`");
   $devices = $result->fetch_all(MYSQLI_ASSOC);
 
-  $result_users = $conn->query("SELECT * FROM `mqtt_user`");
-  $mqtt_users = $result_users->fetch_all(MYSQLI_ASSOC);
+  $result_users = $conn->query("SELECT * FROM `users`");
+  $users = $result_users->fetch_all(MYSQLI_ASSOC);
 
   //echo(count($mqtt_users));
 
   $count = count($devices);
 
   if ($count == 1){
-    $_SESSION['user_id'] = $users[0]['user_id'];
-    $_SESSION['user_email'] = $users[0]['user_email'];
+    $_SESSION['user_id'] = $users[0]['users_id'];
+    $_SESSION['user_email'] = $users[0]['users_email'];
+
 
     //$msg .="Logueado con éxito!";
     $_SESSION['logged'] = true;
@@ -198,7 +199,7 @@
                         <div class="white-box">
 
                             <div class="table-responsive">
-                                <table class="table">
+                                <table id="editableTable" class="table">
                                     <thead>
                                         <tr>
                                             <th class="border-top-0">Id</th>
@@ -212,9 +213,9 @@
                                       <?php foreach ($devices as $device) {?>
                                         <tr>
                                             <td><?php echo $device['estaciones_id'] ?></td>
-                                            <td><?php echo $device['estaciones_user_id'] ?></td>
-                                            <td><?php echo $device['estaciones_serie'] ?></td>
-                                            <td><?php echo $device['estaciones_alias'] ?></td>
+                                            <td><span id="estaciones_user_id" data-id="<?php echo $device['estaciones_user_id'] ?>" class="edit"><?php echo $device['estaciones_user_id'] ?></span></td>
+                                            <td><span id="estaciones_serie" data-id="<?php echo $device['estaciones_user_id'] ?>" class="edit"><?php echo $device['estaciones_serie'] ?></span></td>
+                                            <td><span id="estaciones_alias" data-id="<?php echo $device['estaciones_user_id'] ?>" class="edit"><?php echo $device['estaciones_alias'] ?></span></td>
                                             <td><?php echo $device['estaciones_date'] ?></td>
                                             <td><a href="delete.php?id=<?php echo $data['id']; ?>">Delete</a></td>
                                         </tr>
@@ -230,19 +231,17 @@
                                         <tr>
                                             <th class="border-top-0">Id</th>
                                             <th class="border-top-0">Usuario</th>
-                                            <th class="border-top-0">Password</th>
-                                            <th class="border-top-0">Es Superusuario?</th>
+                                            <th class="border-top-0">Email</th>
                                             <th class="border-top-0">Fecha alta</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                      <?php foreach ($mqtt_users as $mqtt_user) {?>
+                                      <?php foreach ($users as $user) {?>
                                         <tr>
-                                            <td><?php echo $mqtt_user['id'] ?></td>
-                                            <td><?php echo $mqtt_user['username'] ?></td>
-                                            <td><?php echo $mqtt_user['password'] ?></td>
-                                            <td><?php echo $mqtt_user['is_superuser'] ?></td>
-                                            <td><?php echo $mqtt_user['created'] ?></td>
+                                            <td><?php echo $user['users_id'] ?></td>
+                                            <td><?php echo $user['users_username'] ?></td>
+                                            <td><span id="users_email" data-id="<?php echo $user['users_id'] ?>" class="edituser"><?php echo $user['users_email'] ?></span></td>
+                                            <td><?php echo $user['users_date'] ?></td>
                                         </tr>
                                       <?php } ?>
                                     </tbody>
@@ -297,8 +296,12 @@
     <script src="js/waves.js"></script>
     <!--Menu sidebar -->
     <script src="js/sidebarmenu.js"></script>
+
+    <!-- Editable Table -->
+    <script src="js/jquery.jeditable.min.js"></script>
     <!--Custom JavaScript -->
     <script src="js/custom.js"></script>
 </body>
 
 </html>
+
