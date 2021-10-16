@@ -40,6 +40,7 @@ Habilitamos el certficado ssl con let's encript.
 habilitamos ftp en vestacp
 modificamos vsftpd en vestacp (apartado servidor) e incluimos acceso en modo pasivo: pasv_address="ip_publica"
 comprobar los permisos de la carpeta /home/admin/web/public_html/$host (tienen que ser 755)
+comprobamos que está abierto el rango de puertos 12000-12100 tanto en vesta como en aws
 usamos atom con el plugin remote ftp para conectarnos a nuestro servidor. Configuramos el archivo .ftpconfig
 
 
@@ -112,8 +113,7 @@ CREATE TABLE `admin_masteriot`.`mediciones`(
 
 # Instalamos emqx
 
-#ojo a esto añadir el ./bionic stable
-#deb [arch=amd64] https://repos.emqx.io/emqx-ce/deb/ubuntu ./bionic stable
+
 
 
 #Antes de arrancar el servicio hay que modificar los puertos por defecto en el arhchivo /emqx/etc/emqx.conf. En la guía de emqx.io "first time" indica cúales son. Aunque en el curso hemos cambiado alguno más. En concreto:
@@ -133,7 +133,7 @@ CREATE TABLE `admin_masteriot`.`mediciones`(
 Abrimos puertos en vesta y aws para emqx mqtt (sin esto no funciona el dashboard)
 1883, 8883, 8093, 8094, 8090, 18083
 
-instalmos los certificados para dar seguridad ssl a emqx (ojo! con la versión v4.0.3, al final he utilizado la versión 3.0.1)
+instalmos los certificados para dar seguridad ssl a emqx (He utilizado la versión 3.2.8)
 Importante con los certificados: es mejor copiar el archivo /home/amdin/conf/web/ssl.$dominio.crt y .key a la carpeta donde estén los certificados de emqx, que en la versión 3.X es en /etc/emqx/certs/ después se renombran a cert.pem y key.pem. Lo más importante es que después se cambie el propietario y grupo de los archivos a "emqx:emqx" -> chown emqx:emqx cert.pem y key.pem. Si no el servicio no podrá acceder a los certificados. Me he dado cuenta de esto, gracias al log /var/log/emqx/emqx.log.1. Más info en https://github.com/emqx/emqx/issues/2335
 
 
@@ -442,6 +442,7 @@ También necesitamos el archivo 'action.php' que será el que actualice el dato 
 
 
 
+instalar pm2 para ejecutar las aplicaciones nodejs de forma indefinida.
 
 
 
@@ -474,45 +475,3 @@ También necesitamos el archivo 'action.php' que será el que actualice el dato 
 
 
 
-
-
-/////////////***************
-https://platzi.com/blog/django-aws/
-
-sudo apt-get install python3-pip python3-dev
-
-//postgresql
-sudo apt-get install postgresql postgresql-contrib libpq-dev
-Success. You can now start the database server using:
-
-    pg_ctlcluster 12 main start
-
-Ver Cluster Port Status Owner    Data directory              Log file
-12  main    5432 down   postgres /var/lib/postgresql/12/main /var/log/postgresql/postgresql-12-main.log
-
-sudo apt-get install git
-sudo apt-get install nginx
-
-Configurar PostgreSQL
-
-    Iniciamos sesión con el usuario postgres: [shell]sudo su postgres[/shell]
-    Entramos al shell interactivo de postgres: [shell]psql[/shell]
-    Creamos una base de datos: [shell]CREATE DATABASE platzi;[/shell]
-    Creamos un usuario para la base de datos: [shell]CREATE USER pihack WITH PASSWORD 'pihack1';[/shell]
-    Le damos permisos al usuario sobre la base de datos: [shell]GRANT ALL PRIVILEGES ON DATABASE iot TO pihack;[/shell]
-    Salimos del shell: [shell]\q[/shell]
-    Salimos de la sesión de postgres: [shell]exit[/shell]
-
-Configurar el proyecto
-
-    Clonar el proyecto de Github: [shell]git clone https://github.com/pablotrinidad/cursos_platzi.git platzi[/shell]
-    Instalar virtualenv: [shell]sudo pip3 install virtualenv[/shell]
-    Crear entorno virtual: [shell]virtualenv -p $(which python3) .venv[/shell]
-    Activar entorno virtual: [shell]source .venv/bin/activate[/shell]
-    Instalar dependencias para Pillow: [shell]sudo apt-get install libjpeg-dev[/shell]
-    Ir al folder del proyecto: [shell]cd platzi[/shell]
-    Instalar dependencias de python del proyecto: [shell]pip install -r requirements/prod.txt[/shell]
-    Agregamos algunas variables de entorno a ~/.bashrc para probar localmente que todo esté funcionando: [shell]vi ~/.bashrc[/shell] Las variables lucen algo similar a lo siguiente: [shell] export PLATZI_SECRET_KEY="random_key:aasdafasf"export PLATZI_DB_NAME="platzi"; export PLATZI_DB_USER="freddier"; export PLATZI_DB_PASSWORD="cvander<3" export PLATZI_DB_PORT="5432" export PLATZI_DB_HOST="localhost"export DJANGO_SETTINGS_MODULE="platzi.settings.prod"[/shell]
-    Leemos las variables: [shell]source ~/.bashrc[/shell]
-    Editamos la variable ALLOWED_HOSTS del archivo de settings de producción: [shell]vim platzi/settings/prod.py[/shell] La variable tendrá algo como lo siguiente, donde gatos.io sea tu dominio o IP: [python]ALLOWED_HOSTS = ['.gatos.io'][/python]
-*********///////
